@@ -45,35 +45,22 @@ def notebook_01() -> list:
             """
             # 01 | Data Preparation
 
-            This notebook is the starting point of the project.
+            This notebook loads the raw dataset, refreshes the cached summary if needed, and checks the basic fields used later in the project.
 
-            Its role is simple:
-
-            1. locate the project and the raw dataset
-            2. build or refresh the cached dataset summary
-            3. inspect the raw fields and the basic scale of the data
-            4. explain the modeling choices that the later notebooks rely on
-
-            If someone wants to reproduce the project step by step, this is the first notebook to run.
             Before running it, download the raw dataset from `https://networkrepository.com/rec-dating.php`
             and place the file at `data/rec-dating/rec-dating.edges`.
             """
         ),
         md(
             """
-            ## Workflow Map
+            ## Workflow
 
-            The notebook sequence is now organized as a clean four-step pipeline:
+            Run the notebooks in this order:
 
-            1. **Data preparation**: understand the raw file and cache the dataset summary
-            2. **Exploration**: inspect the first descriptive patterns with tables and plots
-            3. **Applications**: answer the substantive network questions with focused analyses
-            4. **Final plots for the paper**: collect the paper-facing visuals and reference values
-
-            Throughout the notebooks, we use two interpretation styles:
-
-            - a **technical interpretation** for methodological clarity
-            - a **plain-language interpretation** for readers who are less technical
+            1. **Data preparation**: inspect the raw file and cache the dataset summary
+            2. **Exploration**: review the main descriptive tables and plots
+            3. **Applications**: run the concentration and feature-alignment analyses
+            4. **Final plots**: collect the last figures and reference values
             """
         ),
         code(
@@ -162,18 +149,15 @@ def notebook_01() -> list:
                 [
                     {
                         "field": "rater_id",
-                        "technical meaning": "The user who sends the rating.",
-                        "plain-language meaning": "Who gave the score.",
+                        "description": "User ID on the sending side of the edge.",
                     },
                     {
                         "field": "profile_id",
-                        "technical meaning": "The user who receives the rating.",
-                        "plain-language meaning": "Who was scored.",
+                        "description": "User ID on the receiving side of the edge.",
                     },
                     {
                         "field": "rating",
-                        "technical meaning": "An integer edge weight on the 1-10 scale.",
-                        "plain-language meaning": "The score itself.",
+                        "description": "Observed score on the 1-10 scale.",
                     },
                 ]
             )
@@ -282,19 +266,11 @@ def notebook_01() -> list:
             display(
                 Markdown(
                     f"""
-                    ## Interpretation
-
-                    ### Technical interpretation
+                    ## Key Points
 
                     - The dataset is large enough to support full-network analysis: **{summary['edge_count']:,}** edges, **{summary['unique_raters']:,}** raters, and **{summary['unique_profiles']:,}** profiles.
                     - The overlap between `rater_id` and `profile_id` values is substantial (**{summary['overlapping_user_ids']:,}** IDs), which justifies the role-based bipartite representation.
                     - The score distribution is not flat; the upper end of the scale is used heavily, which matters for the later positive-layer analysis.
-
-                    ### Plain-language interpretation
-
-                    - This is a very large rating network, not a toy example.
-                    - Many users appear in both roles, so it would be misleading to mix "giving ratings" and "receiving ratings" into a single role.
-                    - People use high scores quite often, so it makes sense later to ask what happens when we focus on strong positive ratings.
                     """
                 )
             )
@@ -302,13 +278,13 @@ def notebook_01() -> list:
         ),
         md(
             """
-            ## What This Notebook Produced
+            ## Output
 
-            After running this notebook, the key cached artifact is:
+            The key cached artifact from this notebook is:
 
             - `outputs/data/dataset_summary.json`
 
-            The next notebook uses that summary together with the first study outputs to explore popularity, prestige, and inequality with tables and figures.
+            The next notebook uses that summary to explore popularity, prestige, and inequality.
             """
         ),
     ]
@@ -320,26 +296,19 @@ def notebook_02() -> list:
             """
             # 02 | Exploration
 
-            This notebook is the exploratory stage of the project.
-
-            It answers the first descriptive questions:
+            This notebook covers the first descriptive questions:
 
             - How do popularity and prestige relate?
             - How unequal is attention on the profile side?
             - Which profiles and raters stand out most strongly?
-
-            The purpose here is not yet to make the most specific substantive claim.
-            Instead, we build intuition with tables, rankings, and plots.
             """
         ),
         md(
             """
-            ## Notebook Logic
+            ## Setup
 
-            This notebook uses the first-study pipeline.
-
-            If the required artifacts are missing, it can rebuild them by running the project analysis script.
-            By default, it reuses existing outputs to keep the notebook fast.
+            If the required artifacts are missing, this notebook rebuilds them with the project analysis script.
+            Otherwise it reuses the cached outputs.
             """
         ),
         code(
@@ -562,20 +531,12 @@ def notebook_02() -> list:
             display(
                 Markdown(
                     f"""
-                    ## Interpretation
-
-                    ### Technical interpretation
+                    ## Main Takeaways
 
                     - Popularity and prestige are strongly aligned in the full network (**Pearson = {full_corr['pearson']:.3f}**, **Spearman = {full_corr['spearman']:.3f}**).
                     - The alignment remains strong when we restrict the graph to positive ratings of at least 8.
                     - The rankings are not identical: the top-100 sets overlap on **{overlap['intersection']}** profiles, not all 100.
                     - Both attention and prestige are highly unequal; the inequality summary suggests that **raw attention is slightly more concentrated than authority** in the full-layer outputs.
-
-                    ### Plain-language interpretation
-
-                    - Profiles that attract a lot of total attention are usually also the profiles that look important in the network structure.
-                    - Still, the two ideas are not the same thing. Some profiles are helped or hurt by *who* rates them, not just by *how many* ratings they get.
-                    - A relatively small part of the network captures a very large share of attention.
                     """
                 )
             )
@@ -583,15 +544,13 @@ def notebook_02() -> list:
         ),
         md(
             """
-            ## What Comes Next
+            ## Next
 
-            Exploration gives us the big picture.
-
-            The next notebook moves from broad description to **applications**:
+            The next notebook moves from broad description to the concentration and feature-alignment analyses:
 
             - concentration of high and low ratings
             - concentration of overall interaction
-            - feature alignment between the popularity/prestige study and the concentration study
+            - feature alignment with the popularity/prestige results
             """
         ),
     ]
@@ -603,10 +562,7 @@ def notebook_03() -> list:
             """
             # 03 | Applications
 
-            This notebook applies the project framework to the main substantive questions.
-
-            The focus is no longer just "what does the network look like?"
-            Instead, we ask:
+            This notebook focuses on the main project questions:
 
             - Which profiles concentrate high ratings?
             - Which profiles concentrate low ratings?
@@ -615,14 +571,14 @@ def notebook_03() -> list:
         ),
         md(
             """
-            ## Notebook Logic
+            ## Setup
 
             This notebook depends on two analysis stages:
 
             - the **rating-extremes stage**
             - the **feature-alignment stage**
 
-            If the required artifacts are missing, the notebook can rebuild them in sequence.
+            If the required artifacts are missing, it rebuilds them in sequence.
             """
         ),
         code(
@@ -813,20 +769,12 @@ def notebook_03() -> list:
             display(
                 Markdown(
                     f"""
-                    ## Interpretation of Application 1
-
-                    ### Technical interpretation
+                    ## Application 1 Takeaways
 
                     - The top **1%** of profiles receives **{all_summary['top_1pct_share']:.2%}** of all interactions.
                     - The same top **1%** receives **{high_summary['top_1pct_share']:.2%}** of all high ratings.
                     - Low ratings are concentrated too, but less sharply than high ratings.
                     - This means that concentration is a general property of the profile side, not only a property of positive ratings.
-
-                    ### Plain-language interpretation
-
-                    - A very small set of profiles gets a huge share of attention.
-                    - This is even more obvious when we focus only on strong positive ratings.
-                    - Negative ratings are also not spread evenly, which suggests that visible profiles attract both approval and criticism.
                     """
                 )
             )
@@ -924,19 +872,11 @@ def notebook_03() -> list:
             display(
                 Markdown(
                     f"""
-                    ## Interpretation of Application 2
-
-                    ### Technical interpretation
+                    ## Application 2 Takeaways
 
                     - The alignment is strongest at the extremes of the ranking, especially in the Top 1% and Bottom 50% buckets.
                     - The observed Top 1% overlap (**{top_overlap['intersection_size']:,}** profiles) is far larger than the fixed-size random expectation (**{top_overlap['expected_random_intersection']:.1f}**).
                     - The most stable shared signals come from degree, strength, authority, and rank-based variables.
-
-                    ### Plain-language interpretation
-
-                    - The profiles that dominate general attention are often the same profiles that dominate strong positive ratings.
-                    - This is not a random coincidence.
-                    - The first study and the concentration study therefore support each other: they are two views of the same broad hierarchy.
                     """
                 )
             )
@@ -944,15 +884,13 @@ def notebook_03() -> list:
         ),
         md(
             """
-            ## Hand-off to the Final Notebook
+            ## Next
 
-            At this point, the project has already produced the main analytical results.
+            The final notebook gathers the last figures and reference values:
 
-            The final notebook does one narrower job:
-
-            - collect the figures used in the paper
-            - present paper-facing reference values
-            - make it easier to compare notebook outputs with the written paper
+            - collect the final figures
+            - show the reference values
+            - keep the final outputs in one place
             """
         ),
     ]
@@ -964,18 +902,18 @@ def notebook_04() -> list:
             """
             # 04 | Final Plots for the Paper
 
-            This notebook is the paper-facing endpoint of the workflow.
+            This notebook gathers the last figures and the reference values used to check the write-up.
 
             It does three things:
 
             1. ensures that the final paper figures exist
-            2. displays those figures in the same narrative order used by the paper
-            3. collects the reference values that the paper text should agree with
+            2. displays those figures in the same order as the paper
+            3. collects the reference values used in the text
             """
         ),
         md(
             """
-            ## Notebook Logic
+            ## Setup
 
             The earlier notebooks produced the study outputs.
             Here we add the final degree-distribution fit if needed and then assemble the paper-ready material.
@@ -1103,10 +1041,7 @@ def notebook_04() -> list:
             display(
                 Markdown(
                     """
-                    **Why this figure matters**
-
-                    This is the cleanest visual summary of the first study.
-                    It shows that popularity and prestige move together strongly even when we avoid the raw log-log scatter.
+                    This figure gives the clearest summary of the popularity-prestige relationship.
                     """
                 )
             )
@@ -1144,10 +1079,7 @@ def notebook_04() -> list:
             display(
                 Markdown(
                     """
-                    **Why this figure matters**
-
-                    This figure links the first study and the concentration study.
-                    It asks whether broader feature families move in compatible directions for both interaction buckets and high-rating buckets.
+                    This figure links the popularity-prestige results with the concentration analysis.
                     """
                 )
             )
@@ -1156,7 +1088,7 @@ def notebook_04() -> list:
         ),
         md(
             """
-            ## Paper-Facing Reference Values
+            ## Reference Values
 
             The table below collects the values that the paper text should agree with.
             """
@@ -1197,21 +1129,13 @@ def notebook_04() -> list:
             display(
                 Markdown(
                     f"""
-                    ## Interpretation
+                    ## Summary
 
-                    ### Technical interpretation
-
-                    - The paper-facing figures support the same broad story as the analysis notebooks.
+                    - The final figures support the same broad story as the analysis notebooks.
                     - Popularity and prestige are strongly aligned, but not identical.
                     - The profile side is extremely concentrated.
                     - In the current outputs, **{concentration_direction}**.
                     - The Top 1% overlap between interaction and high-rating buckets is **{top1_overlap['intersection_size']:,}** profiles, far above the random baseline of **{top1_overlap['expected_random_intersection']:.1f}**.
-
-                    ### Plain-language interpretation
-
-                    - A small group of profiles dominates attention.
-                    - The same small group also dominates strong positive ratings much more than chance would predict.
-                    - These paper figures are therefore not separate stories; together they describe the same hierarchy from different angles.
                     """
                 )
             )
@@ -1219,10 +1143,10 @@ def notebook_04() -> list:
         ),
         md(
             """
-            ## Final Note
+            ## Notes
 
             This notebook does not edit the paper automatically.
-            Its purpose is to make the paper-facing figures and reference values easy to inspect before the paper text is finalized.
+            It keeps the final figures and reference values in one place for checking.
             """
         ),
     ]
@@ -1246,7 +1170,7 @@ def main() -> None:
         if path.exists():
             path.unlink()
 
-    print("Rebuilt notebook workflow:")
+    print("Rebuilt notebooks:")
     for name in [
         "01_data_preparation.ipynb",
         "02_rec_dating_exploration.ipynb",

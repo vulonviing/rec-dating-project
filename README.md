@@ -2,7 +2,7 @@
 
 This project studies the `rec-dating` dataset as a role-based bipartite network.
 
-The workflow is organized as a clean four-stage notebook pipeline so that someone can reproduce the project from top to bottom without guessing which file comes next.
+The notebooks are arranged in four steps and can be run in order from data preparation to the final figures.
 
 ## Core Idea
 
@@ -24,7 +24,7 @@ This framing lets us separate outgoing activity from received attention and appl
 - `data/`: raw dataset
 - `src/rec_dating_project/`: reusable project code
 - `scripts/`: analysis scripts used by the notebooks
-- `notebooks/`: the main reproducible notebook workflow
+- `notebooks/`: the ordered notebook workflow
 - `paper/`: LaTeX paper draft and bibliography
 - `outputs/data/`: generated tables reused across notebooks
 - `outputs/figures/`: generated figures reused in notebooks and paper
@@ -68,12 +68,7 @@ What each notebook does:
 - `01`: inspects the raw file, explains the role-based modeling choice, and builds the cached dataset summary
 - `02`: explores popularity, prestige, inequality, and descriptive plots
 - `03`: applies the framework to bucket concentration and feature alignment
-- `04`: gathers the final paper-facing plots and reference values
-
-All notebooks are written in English and include both:
-
-- technical interpretation
-- plain-language interpretation
+- `04`: gathers the final figures and reference values used to check the project outputs
 
 ## How To Run The Notebooks
 
@@ -106,9 +101,9 @@ The `MPLCONFIGDIR` prefix helps on headless or restricted environments where Mat
 - Missing artifacts are rebuilt automatically by the relevant scripts.
 - If you want a full refresh, set `FORCE_REBUILD = True` in the setup cell of the notebook you are running.
 
-## Scripts Used By The Notebook Pipeline
+## Scripts Used By The Notebooks
 
-The final notebook workflow relies on these scripts:
+The notebooks rely on these scripts:
 
 - `scripts/01_dataset_overview.py`
 - `scripts/02_full_project_analysis.py`
@@ -135,4 +130,4 @@ latexmk -pdf -cd paper/main.tex
 ## Notes
 
 - The dataset is large, so cached artifacts are used intentionally to keep the notebook workflow responsive.
-- The paper-facing notebook is the final check that the written paper and the generated figures still agree.
+- The last notebook is a final check that the generated figures and summary values still line up with the rest of the project.
