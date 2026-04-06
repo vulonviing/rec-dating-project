@@ -22,6 +22,7 @@ env/
 
 # Generated report directory
 outputs/reports/
+outputs/data/*.csv
 
 # Raw dataset (download separately)
 data/rec-dating/rec-dating.edges
