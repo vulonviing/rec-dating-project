@@ -23,6 +23,8 @@ env/
 # Generated report directory
 outputs/reports/
 outputs/data/*.csv
+outputs/data/dataset_summary.json
+outputs/data/degree_distribution_fit_full.json
 
 # Raw dataset (download separately)
 data/rec-dating/rec-dating.edges
