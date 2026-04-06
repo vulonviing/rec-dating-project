@@ -41,15 +41,6 @@ def parse_args() -> argparse.Namespace:
 def run_label(nrows: int | None) -> str:
     return "full" if nrows is None else str(nrows)
 
-
-def build_rank_columns(frame: pd.DataFrame, value_col: str, prefix: str) -> pd.DataFrame:
-    ranked = frame.copy()
-    ranked[f"{prefix}_rank"] = (
-        ranked[value_col].rank(ascending=False, method="min").astype(int)
-    )
-    return ranked
-
-
 def ccdf(values: pd.Series | np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     array = np.asarray(values, dtype=np.float64)
     array = array[np.isfinite(array) & (array > 0)]
@@ -93,112 +84,6 @@ def popularity_prestige_binned_summary(
     )
     return summary.reset_index(drop=True)
 
-
-def top_overlap(frame: pd.DataFrame, col_a: str, col_b: str, k: int) -> dict[str, float]:
-    a = set(frame.sort_values(col_a, ascending=False).head(k)["profile_id"].tolist())
-    b = set(frame.sort_values(col_b, ascending=False).head(k)["profile_id"].tolist())
-    inter = len(a & b)
-    union = len(a | b)
-    return {
-        "k": k,
-        "intersection": inter,
-        "jaccard": (inter / union) if union else 0.0,
-    }
-
-
-def write_markdown_report(
-    output_path: Path,
-    report: dict[str, object],
-    top_profiles_prestige: pd.DataFrame,
-    top_gap_positive: pd.DataFrame,
-    top_gap_negative: pd.DataFrame,
-) -> None:
-    ds = report["dataset_summary"]
-    full_corr = report["full_layer"]["correlations"]
-    full_ineq = report["full_layer"]["profile_inequality"]
-    pos_corr = report["positive_layer"]["correlations"]
-    overlap = report["full_layer"]["top100_popularity_vs_prestige_overlap"]
-
-    prestige_ids = ", ".join(str(x) for x in top_profiles_prestige["profile_id"].head(5).tolist())
-    positive_gap_ids = ", ".join(str(x) for x in top_gap_positive["profile_id"].head(5).tolist())
-    negative_gap_ids = ", ".join(str(x) for x in top_gap_negative["profile_id"].head(5).tolist())
-
-    text = f"""# Popularity vs Prestige in an Online Dating Rating Network
-
-## Research Question
-
-Do the most **popular** profiles in the `rec-dating` platform also emerge as the most **prestigious** profiles once we account for who is rating them?
-
-## Data and Modeling Choice
-
-The dataset contains `{ds['edge_count']:,}` weighted interactions.  
-We model it as a **role-based bipartite network**:
-
-- `rater` nodes give ratings
-- `profile` nodes receive ratings
-- edge weight = rating from 1 to 10
-
-This decision is important because the same raw numeric ID can play two different structural roles.
-
-## Core Measures
-
-- Popularity of profiles: `in_degree`, `in_strength`
-- Prestige of profiles: HITS `authority_score`
-- Activity of raters: `out_degree`, `out_strength`
-- Structural importance of raters: HITS `hub_score`
-
-## Main Findings
-
-1. Popularity and prestige are strongly related, but not identical.
-   Full-layer Pearson correlation between `in_strength` and `authority_score`: `{full_corr['pearson']:.4f}`.
-   Full-layer Spearman correlation: `{full_corr['spearman']:.4f}`.
-
-2. The top-100 popularity and top-100 prestige sets overlap, but not perfectly.
-   Intersection: `{overlap['intersection']}`.
-   Jaccard similarity: `{overlap['jaccard']:.4f}`.
-
-3. Attention is highly unequal.
-   Gini for profile in-strength: `{full_ineq['gini_in_strength']:.4f}`.
-   Top 1% share of total in-strength: `{full_ineq['top_1pct_in_strength_share']:.4f}`.
-
-4. Prestige is even more concentrated than raw popularity.
-   Gini for authority: `{full_ineq['gini_authority']:.4f}`.
-   Top 1% share of authority mass: `{full_ineq['top_1pct_authority_share']:.4f}`.
-
-5. When we restrict the graph to strong positive ratings (`rating >= {report['positive_layer']['threshold']}`), popularity and prestige remain closely connected.
-   Positive-layer Pearson correlation: `{pos_corr['pearson']:.4f}`.
-   Positive-layer Spearman correlation: `{pos_corr['spearman']:.4f}`.
-
-## Interpretation
-
-The network does not behave like a simple raw-count popularity contest.  
-Profiles that receive attention from structurally strong raters gain additional prestige through the bipartite network topology.  
-This is why authority-based prestige and in-strength popularity overlap heavily but still diverge in meaningful cases.
-
-## Concrete Cases
-
-- Top prestige profiles include IDs: `{prestige_ids}`.
-- Profiles with the largest positive prestige gap include IDs: `{positive_gap_ids}`.
-- Profiles that are more popular than prestigious include IDs: `{negative_gap_ids}`.
-
-## Limitations
-
-- We do not have demographic or temporal metadata in the local file.
-- IDs are anonymous, so the project focuses on structural patterns rather than user attributes.
-- Because the platform semantics are limited, we interpret ratings as directed evaluative ties, not as confirmed matches or outcomes.
-
-## Deliverables
-
-- Tables and machine-readable outputs in `outputs/data/`
-- Figures in `outputs/figures/`
-- Reports in `outputs/reports/`
-- Data preparation notebook in `notebooks/01_data_preparation.ipynb`
-- Exploratory notebook in `notebooks/02_rec_dating_exploration.ipynb`
-- Final summary notebook in `notebooks/03_final_project_analysis.ipynb`
-"""
-    output_path.write_text(text, encoding="utf-8")
-
-
 def main() -> None:
     args = parse_args()
 
@@ -218,7 +103,7 @@ def main() -> None:
         summary=dataset_summary,
     )
     full_analyzer = PopularityPrestigeAnalyzer(full_snapshot)
-    full_hits = full_analyzer.compute_hits(max_iter=200, tol=1e-7)
+    full_analyzer.compute_hits(max_iter=200, tol=1e-7)
     profile_metrics = full_analyzer.profile_metrics()
     rater_metrics = full_analyzer.rater_metrics()
 
@@ -240,40 +125,7 @@ def main() -> None:
     top_profiles_gap_negative = profile_metrics.sort_values("prestige_gap", ascending=True).head(args.top_k)
     top_raters_activity = rater_metrics.sort_values("out_strength", ascending=False).head(args.top_k)
     top_raters_hub = rater_metrics.sort_values("hub_score", ascending=False).head(args.top_k)
-
-    report = {
-        "dataset_summary": dataset_summary.to_dict(),
-        "full_layer": {
-            "hits_iterations": full_hits.iterations,
-            "hits_converged": full_hits.converged,
-            "snapshot": {
-                "edge_count": full_snapshot.edge_count,
-                "num_raters": full_snapshot.num_raters,
-                "num_profiles": full_snapshot.num_profiles,
-                "density": full_snapshot.density,
-            },
-            "correlations": full_analyzer.popularity_vs_prestige_correlation(profile_metrics),
-            "profile_inequality": full_analyzer.profile_inequality_summary(profile_metrics),
-            "rater_inequality": full_analyzer.rater_inequality_summary(rater_metrics),
-            "top100_popularity_vs_prestige_overlap": top_overlap(
-                profile_metrics, "in_strength", "authority_score", k=100
-            ),
-        },
-        "positive_layer": {
-            "threshold": args.positive_threshold,
-            "snapshot": {
-                "edge_count": positive_snapshot.edge_count,
-                "num_raters": positive_snapshot.num_raters,
-                "num_profiles": positive_snapshot.num_profiles,
-                "density": positive_snapshot.density,
-            },
-            "correlations": positive_analyzer.popularity_vs_prestige_correlation(positive_profile_metrics),
-            "profile_inequality": positive_analyzer.profile_inequality_summary(positive_profile_metrics),
-            "top100_popularity_vs_prestige_overlap": top_overlap(
-                positive_profile_metrics, "in_strength", "authority_score", k=100
-            ),
-        },
-    }
+    full_correlations = full_analyzer.popularity_vs_prestige_correlation(profile_metrics)
 
     rating_dist = dataset_summary.rating_distribution_frame()
 
@@ -391,7 +243,7 @@ def main() -> None:
     plt.close(fig)
 
     print(f"Saved full analysis outputs to {paths.outputs_dir}")
-    print(json.dumps(report["full_layer"]["correlations"], indent=2))
+    print(json.dumps(full_correlations, indent=2))
 
 
 if __name__ == "__main__":

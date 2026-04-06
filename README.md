@@ -28,7 +28,6 @@ This framing lets us separate outgoing activity from received attention and appl
 - `paper/`: LaTeX paper draft and bibliography
 - `outputs/data/`: generated tables reused across notebooks
 - `outputs/figures/`: generated figures reused in notebooks and paper
-- `outputs/reports/`: currently unused in the final workflow
 
 ## Environment Setup
 
@@ -112,15 +111,15 @@ The `MPLCONFIGDIR` prefix helps on headless or restricted environments where Mat
 The final notebook workflow relies on these scripts:
 
 - `scripts/01_dataset_overview.py`
-- `scripts/04_full_project_analysis.py`
-- `scripts/07_profile_rating_extremes.py`
-- `scripts/08_profile_feature_alignment.py`
-- `scripts/09_degree_distribution_fit.py`
+- `scripts/02_full_project_analysis.py`
+- `scripts/03_profile_rating_extremes.py`
+- `scripts/04_profile_feature_alignment.py`
+- `scripts/05_degree_distribution_fit.py`
 
 If the notebook templates ever need to be regenerated, run:
 
 ```bash
-python3 scripts/10_rebuild_notebooks.py
+python3 scripts/06_rebuild_notebooks.py
 ```
 
 ## Paper Reproduction

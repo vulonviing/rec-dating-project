@@ -250,88 +250,6 @@ def plot_heatmap(
     plt.savefig(output_path, dpi=220)
     plt.close(fig)
 
-
-def build_bucket_pair_frame(correlation_frame: pd.DataFrame) -> pd.DataFrame:
-    rows: list[dict[str, float | str]] = []
-    for feature_col, feature_label, family in FEATURE_SPECS:
-        subset = correlation_frame[correlation_frame["feature"] == feature_col]
-        for bucket_label, _ in BUCKET_ANALYSIS_SPECS:
-            interaction_corr = subset.loc[
-                subset["group_label"] == f"Interaction {bucket_label}", "membership_corr"
-            ].iloc[0]
-            high_corr = subset.loc[subset["group_label"] == f"High {bucket_label}", "membership_corr"].iloc[0]
-            rows.append(
-                {
-                    "feature": feature_col,
-                    "feature_label": feature_label,
-                    "family": family,
-                    "bucket": bucket_label,
-                    "interaction_corr": float(interaction_corr),
-                    "high_corr": float(high_corr),
-                }
-            )
-    return pd.DataFrame(rows)
-
-
-def select_label_points(bucket_pair_frame: pd.DataFrame) -> pd.DataFrame:
-    frame = bucket_pair_frame.copy()
-    frame["sum_corr"] = frame["interaction_corr"] + frame["high_corr"]
-    frame["diag_gap"] = (frame["high_corr"] - frame["interaction_corr"]).abs()
-    frame["dist_origin"] = np.hypot(frame["interaction_corr"], frame["high_corr"])
-
-    selected_parts: list[pd.DataFrame] = []
-    for family in ("full", "pos8", "pos3"):
-        family_frame = frame[frame["family"] == family].copy()
-        positive = family_frame[family_frame["sum_corr"] > 0].nlargest(2, "dist_origin").copy()
-        positive["label_reason"] = "strong_positive_alignment"
-
-        negative = family_frame[family_frame["sum_corr"] < 0].nlargest(2, "dist_origin").copy()
-        negative["label_reason"] = "strong_negative_alignment"
-
-        off_diagonal = family_frame.nlargest(1, "diag_gap").copy()
-        off_diagonal["label_reason"] = "off_diagonal_outlier"
-
-        selected_parts.extend([positive, negative, off_diagonal])
-
-    selected = pd.concat(selected_parts, ignore_index=True)
-    selected = selected.sort_values(["dist_origin", "diag_gap"], ascending=[False, False])
-    selected = selected.drop_duplicates(subset=["feature", "family", "bucket"]).reset_index(drop=True)
-    return selected
-
-
-def write_bucket_pair_markdown(bucket_pair_frame: pd.DataFrame, selected_points: pd.DataFrame, output_path: Path) -> None:
-    display = bucket_pair_frame.copy()
-    selected_keys = {
-        (row.feature, row.family, row.bucket): row.label_reason
-        for row in selected_points.itertuples(index=False)
-    }
-    display["selected_label"] = [
-        "yes" if (feature, family, bucket) in selected_keys else "no"
-        for feature, family, bucket in zip(display["feature"], display["family"], display["bucket"])
-    ]
-    display["label_reason"] = [
-        selected_keys.get((feature, family, bucket), "")
-        for feature, family, bucket in zip(display["feature"], display["family"], display["bucket"])
-    ]
-    display["interaction_corr"] = display["interaction_corr"].map(lambda x: f"{x:.3f}")
-    display["high_corr"] = display["high_corr"].map(lambda x: f"{x:.3f}")
-    display["family"] = display["family"].str.upper()
-
-    header = [
-        "# Feature Alignment Point Table",
-        "",
-        "All plotted points from the consistency scatter. `selected_label = yes` marks the points annotated in the figure.",
-        "",
-        "| Feature | Family | Bucket | Interaction Corr | High Corr | Selected Label | Label Reason |",
-        "|---|---|---|---:|---:|---|---|",
-    ]
-    rows = [
-        f"| {row.feature_label} | {row.family} | {row.bucket} | {row.interaction_corr} | {row.high_corr} | {row.selected_label} | {row.label_reason or '-'} |"
-        for row in display.itertuples(index=False)
-    ]
-    output_path.write_text("\n".join(header + rows) + "\n", encoding="utf-8")
-
-
 def build_feature_class_frame(summary_frame: pd.DataFrame) -> pd.DataFrame:
     rows: list[dict[str, float | int | str]] = []
     layer_labels = {"full": "ALL", "pos8": "POS8", "pos3": "POS3"}
@@ -360,33 +278,6 @@ def build_feature_class_frame(summary_frame: pd.DataFrame) -> pd.DataFrame:
                 }
             )
     return pd.DataFrame(rows)
-
-
-def write_feature_class_markdown(feature_class_frame: pd.DataFrame, output_path: Path) -> None:
-    display = feature_class_frame.copy()
-    for col in [
-        "interaction_mean_corr",
-        "high_mean_corr",
-        "interaction_min_corr",
-        "interaction_max_corr",
-        "high_min_corr",
-        "high_max_corr",
-    ]:
-        display[col] = display[col].map(lambda x: f"{x:.3f}")
-
-    header = [
-        "# Feature Class Summary",
-        "",
-        "Each row aggregates several original variables into one interpretable feature class within one layer.",
-        "",
-        "| Feature Class | Layer | N Features | Mean Interaction Corr | Mean High Corr | Min Interaction | Max Interaction | Min High | Max High | Included Features |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|---|",
-    ]
-    rows = [
-        f"| {row.class_label} | {row.layer_label} | {row.feature_count} | {row.interaction_mean_corr} | {row.high_mean_corr} | {row.interaction_min_corr} | {row.interaction_max_corr} | {row.high_min_corr} | {row.high_max_corr} | {row.included_features} |"
-        for row in display.itertuples(index=False)
-    ]
-    output_path.write_text("\n".join(header + rows) + "\n", encoding="utf-8")
 
 
 def plot_feature_class_scatter(feature_class_frame: pd.DataFrame, output_path: Path) -> None:
@@ -492,123 +383,6 @@ def plot_feature_class_scatter(feature_class_frame: pd.DataFrame, output_path: P
     plt.tight_layout()
     plt.savefig(output_path, dpi=220)
     plt.close(fig)
-
-
-def plot_consistency_scatter(
-    bucket_pair_frame: pd.DataFrame,
-    selected_points: pd.DataFrame,
-    output_path: Path,
-) -> None:
-    fig, ax = plt.subplots(figsize=(11.2, 8.4))
-    bucket_colors = {
-        "Top 1%": "#b22222",
-        "Top 1-5%": "#e76f51",
-        "Top 5-10%": "#f4a261",
-        "Top 10-20%": "#e9c46a",
-        "Top 20-50%": "#5c7c8a",
-        "Bottom 50%": "#264653",
-    }
-    family_markers = {"full": "o", "pos8": "s", "pos3": "^"}
-    label_offsets = [
-        (8, 8),
-        (8, -9),
-        (-8, 8),
-        (-8, -9),
-        (10, 2),
-        (-10, 2),
-        (2, 10),
-        (2, -10),
-    ]
-    selected_lookup = {
-        (row.feature, row.family, row.bucket): idx
-        for idx, row in enumerate(selected_points.itertuples(index=False))
-    }
-
-    for bucket_label, _ in BUCKET_ANALYSIS_SPECS:
-        bucket_subset = bucket_pair_frame[bucket_pair_frame["bucket"] == bucket_label]
-        for family, marker in family_markers.items():
-            subset = bucket_subset[bucket_subset["family"] == family]
-            if subset.empty:
-                continue
-            ax.scatter(
-                subset["interaction_corr"],
-                subset["high_corr"],
-                s=72,
-                alpha=0.88,
-                color=bucket_colors[bucket_label],
-                edgecolors="black",
-                linewidths=0.35,
-                marker=marker,
-                label=bucket_label if family == "full" else None,
-            )
-            for row in subset.itertuples(index=False):
-                key = (row.feature, row.family, row.bucket)
-                if key not in selected_lookup:
-                    continue
-                dx, dy = label_offsets[selected_lookup[key] % len(label_offsets)]
-                ax.annotate(
-                    row.feature_label,
-                    (row.interaction_corr, row.high_corr),
-                    xytext=(dx, dy),
-                    textcoords="offset points",
-                    fontsize=8.1,
-                    color="black",
-                    alpha=0.88,
-                    bbox={
-                        "boxstyle": "round,pad=0.15",
-                        "facecolor": "white",
-                        "alpha": 0.72,
-                        "edgecolor": "none",
-                    },
-                )
-
-    max_abs = float(
-        max(
-            bucket_pair_frame["interaction_corr"].abs().max(),
-            bucket_pair_frame["high_corr"].abs().max(),
-        )
-    )
-    lim = max_abs * 1.08
-
-    ax.axhline(0, color="gray", linewidth=1.0, linestyle="--", alpha=0.7)
-    ax.axvline(0, color="gray", linewidth=1.0, linestyle="--", alpha=0.7)
-    ax.plot([-lim, lim], [-lim, lim], color="gray", linewidth=1.0, linestyle=":", alpha=0.7)
-    ax.set_xlim(-lim, lim)
-    ax.set_ylim(-lim, lim)
-    ax.set_xlabel("Correlation with interaction bucket membership")
-    ax.set_ylabel("Correlation with high-rating bucket membership")
-    ax.set_title("Do Matching Interaction and High-Rating Buckets Align in Feature Space?")
-    ax.grid(alpha=0.28)
-
-    bucket_handles = [
-        Line2D(
-            [0],
-            [0],
-            marker="o",
-            color="w",
-            label=bucket_label,
-            markerfacecolor=bucket_colors[bucket_label],
-            markeredgecolor="black",
-            markeredgewidth=0.35,
-            markersize=9,
-        )
-        for bucket_label, _ in BUCKET_ANALYSIS_SPECS
-    ]
-    ax.legend(handles=bucket_handles, title="Bucket", loc="upper left")
-    ax.text(
-        0.99,
-        0.02,
-        "Circle = FULL, square = POS8",
-        transform=ax.transAxes,
-        ha="right",
-        va="bottom",
-        fontsize=9,
-        bbox={"boxstyle": "round,pad=0.25", "facecolor": "white", "alpha": 0.85, "edgecolor": "0.8"},
-    )
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=220)
-    plt.close(fig)
-
 
 def main() -> None:
     paths = ProjectPaths.default()
@@ -759,8 +533,6 @@ def main() -> None:
 
     merged.to_csv(profile_output, index=False)
     correlation_frame.to_csv(corr_output, index=False)
-    bucket_pair_frame = build_bucket_pair_frame(correlation_frame)
-    selected_points = select_label_points(bucket_pair_frame)
     feature_class_frame = build_feature_class_frame(summary_frame)
     feature_class_frame.to_csv(feature_class_output, index=False)
     summary_frame.to_csv(summary_output, index=False)
@@ -779,7 +551,6 @@ def main() -> None:
 
     corr_heatmap_path = output_figures / f"profile_feature_alignment_heatmap_{label}.png"
     zscore_heatmap_path = output_figures / f"profile_feature_alignment_zscore_heatmap_{label}.png"
-    raw_consistency_path = output_figures / f"profile_feature_alignment_consistency_raw_{label}.png"
     consistency_path = output_figures / f"profile_feature_alignment_consistency_{label}.png"
 
     plot_heatmap(
@@ -800,7 +571,6 @@ def main() -> None:
         vmax=6.5,
         fmt=".1f",
     )
-    plot_consistency_scatter(bucket_pair_frame, selected_points, raw_consistency_path)
     plot_feature_class_scatter(feature_class_frame, consistency_path)
 
     print(f"Saved profile feature alignment outputs to {paths.outputs_dir}")

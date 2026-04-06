@@ -1,4 +1,4 @@
-from .analysis import HitsResult, PopularityPrestigeAnalyzer, RoleConcentrationSummary
+from .analysis import HitsResult, PopularityPrestigeAnalyzer
 from .dataset import DatasetSummary, RecDatingDataset
 from .network import BipartiteSnapshot, RoleBasedBipartiteNetwork
 from .paths import ProjectPaths
@@ -11,5 +11,4 @@ __all__ = [
     "ProjectPaths",
     "RecDatingDataset",
     "RoleBasedBipartiteNetwork",
-    "RoleConcentrationSummary",
 ]

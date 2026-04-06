@@ -55,6 +55,8 @@ def notebook_01() -> list:
             4. explain the modeling choices that the later notebooks rely on
 
             If someone wants to reproduce the project step by step, this is the first notebook to run.
+            Before running it, download the raw dataset from `https://networkrepository.com/rec-dating.php`
+            and place the file at `data/rec-dating/rec-dating.edges`.
             """
         ),
         md(
@@ -416,7 +418,7 @@ def notebook_02() -> list:
                 ]
                 missing = [path for path in required_data + required_figures if not path.exists()]
                 if force or missing:
-                    run_script("04_full_project_analysis.py")
+                    run_script("02_full_project_analysis.py")
 
 
             ensure_first_study_outputs(FORCE_REBUILD)
@@ -673,7 +675,7 @@ def notebook_03() -> list:
                     OUTPUT_DATA / "rater_metrics_full.csv",
                 ]
                 if force or any(not path.exists() for path in required):
-                    run_script("04_full_project_analysis.py")
+                    run_script("02_full_project_analysis.py")
 
 
             def ensure_stage_three_outputs(force: bool = False) -> None:
@@ -692,7 +694,7 @@ def notebook_03() -> list:
                     OUTPUT_FIGURES / "profile_interaction_bucket_shares_full.png",
                 ]
                 if force or any(not path.exists() for path in extremes_required):
-                    run_script("07_profile_rating_extremes.py")
+                    run_script("03_profile_rating_extremes.py")
 
                 alignment_required = [
                     OUTPUT_DATA / "profile_feature_alignment_summary_full.csv",
@@ -705,7 +707,7 @@ def notebook_03() -> list:
                     OUTPUT_FIGURES / "profile_feature_alignment_consistency_full.png",
                 ]
                 if force or any(not path.exists() for path in alignment_required):
-                    run_script("08_profile_feature_alignment.py")
+                    run_script("04_profile_feature_alignment.py")
 
 
             ensure_stage_three_outputs(FORCE_REBUILD)
@@ -1035,7 +1037,7 @@ def notebook_04() -> list:
                     OUTPUT_FIGURES / "profile_lorenz_full.png",
                 ]
                 if force or any(not path.exists() for path in stage_two):
-                    run_script("04_full_project_analysis.py")
+                    run_script("02_full_project_analysis.py")
 
                 stage_three = [
                     OUTPUT_DATA / "profile_rating_extremes_summary_full.csv",
@@ -1044,15 +1046,15 @@ def notebook_04() -> list:
                     OUTPUT_FIGURES / "profile_feature_alignment_consistency_full.png",
                 ]
                 if force or any(not path.exists() for path in stage_three):
-                    run_script("07_profile_rating_extremes.py")
-                    run_script("08_profile_feature_alignment.py")
+                    run_script("03_profile_rating_extremes.py")
+                    run_script("04_profile_feature_alignment.py")
 
                 degree_fit = [
                     OUTPUT_DATA / "degree_distribution_fit_full.json",
                     OUTPUT_FIGURES / "degree_distribution_fit_full.png",
                 ]
                 if force or any(not path.exists() for path in degree_fit):
-                    run_script("09_degree_distribution_fit.py")
+                    run_script("05_degree_distribution_fit.py")
 
 
             ensure_all_outputs(FORCE_REBUILD)

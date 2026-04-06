@@ -120,52 +120,6 @@ def top_share_summary(frame: pd.DataFrame, value_col: str, label: str) -> dict[s
     }
 
 
-def write_markdown_report(
-    output_path: Path,
-    summary_frame: pd.DataFrame,
-    high_min: int,
-    low_max: int,
-) -> None:
-    overall = summary_frame.loc[summary_frame["series"] == "all_interactions"].iloc[0]
-    high = summary_frame.loc[summary_frame["series"] == "high_ratings"].iloc[0]
-    low = summary_frame.loc[summary_frame["series"] == "low_ratings"].iloc[0]
-
-    text = f"""# Profile Rating Extremes Report
-
-## Research Question
-
-Are a small number of profiles systematically receiving a disproportionate share of high ratings and low ratings?
-
-## Thresholds
-
-- High ratings: `rating >= {high_min}`
-- Low ratings: `rating <= {low_max}`
-
-## Main Findings
-
-1. High ratings are extremely concentrated.
-   The top `1%` of profiles receive `{high['top_1pct_share']:.2%}` of all high ratings.
-   The top `10%` receive `{high['top_10pct_share']:.2%}`.
-   The top `20%` receive `{high['top_20pct_share']:.2%}`.
-
-2. Low ratings are also concentrated, though not in exactly the same way.
-   The top `1%` of profiles receive `{low['top_1pct_share']:.2%}` of all low ratings.
-   The top `10%` receive `{low['top_10pct_share']:.2%}`.
-   The top `20%` receive `{low['top_20pct_share']:.2%}`.
-
-3. General interaction concentration is the baseline version of the same question.
-   The top `20%` of profiles receive `{overall['top_20pct_share']:.2%}` of all received interactions.
-   `{overall['user_share_for_80pct']:.2%}` of profiles are enough to account for `80%` of all received interactions.
-
-## Interpretation
-
-The evidence supports the idea that received attention is not evenly spread across profiles.
-In particular, high ratings are even more concentrated than total interaction volume, which is consistent with the hypothesis that a relatively small subset of profiles attracts a disproportionate amount of strong positive attention.
-Low ratings are concentrated too, which suggests negative attention is also not uniformly distributed across profiles.
-"""
-    output_path.write_text(text, encoding="utf-8")
-
-
 def main() -> None:
     args = parse_args()
     paths = ProjectPaths.default()
@@ -257,7 +211,6 @@ def main() -> None:
     figure_bucket_shares = paths.output_figures_dir / f"profile_bucket_shares_{label}.png"
     figure_interaction_curve = paths.output_figures_dir / f"profile_interaction_concentration_curve_{label}.png"
     figure_interaction_buckets = paths.output_figures_dir / f"profile_interaction_bucket_shares_{label}.png"
-    figure_overall = paths.output_figures_dir / f"profile_interaction_concentration_{label}.png"
 
     profile_frame.to_csv(profile_csv, index=False)
     summary_frame.to_csv(summary_csv, index=False)
@@ -387,29 +340,6 @@ def main() -> None:
     ax.grid(axis="y", alpha=0.3)
     plt.tight_layout()
     plt.savefig(figure_interaction_buckets, dpi=220)
-    plt.close(fig)
-
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.8))
-    axes[0].plot(x_curve, y_curve, color="#1d3557", linewidth=2.2)
-    axes[0].plot([0, 1], [0, 1], linestyle="--", color="gray", alpha=0.7)
-    axes[0].set_xlabel("Top share of profiles")
-    axes[0].set_ylabel("Cumulative share of received interactions")
-    axes[0].set_title("Overall Interaction Concentration Across Profiles")
-    axes[0].grid(alpha=0.3)
-
-    overall_buckets = overall_buckets.set_index("bucket").reindex(bucket_order).reset_index()
-    axes[1].bar(
-        overall_buckets["bucket"],
-        overall_buckets["value_share"],
-        color=["#1d3557", "#457b9d", "#5c7ea7", "#7b9cc0", "#a8c0d9", "#d9e7f5"],
-    )
-    axes[1].set_ylim(0, 1)
-    axes[1].set_ylabel("Share of all received interactions")
-    axes[1].set_title("Which Profile Buckets Capture Most Interactions?")
-    axes[1].tick_params(axis="x", rotation=25)
-    axes[1].grid(axis="y", alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(figure_overall, dpi=220)
     plt.close(fig)
 
     print(f"Saved profile rating extremes outputs to {paths.outputs_dir}")
