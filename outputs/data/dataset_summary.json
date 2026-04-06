@@ -1,0 +1,187 @@
+{
+  "edge_count": 17359346,
+  "unique_raters": 135360,
+  "unique_profiles": 168792,
+  "unique_users_union": 168792,
+  "overlapping_user_ids": 135360,
+  "exclusive_profile_ids": 33432,
+  "max_rater_id": 135360,
+  "max_profile_id": 168792,
+  "mean_rating": 5.9384367360383274,
+  "rating_histogram": {
+    "1": 2315546,
+    "2": 1235266,
+    "3": 1000377,
+    "4": 1096031,
+    "5": 1991628,
+    "6": 1605496,
+    "7": 1793187,
+    "8": 1664057,
+    "9": 1117416,
+    "10": 3540342
+  },
+  "top_raters": [
+    {
+      "rater_id": 90281,
+      "count": 25042
+    },
+    {
+      "rater_id": 56793,
+      "count": 21599
+    },
+    {
+      "rater_id": 33640,
+      "count": 19908
+    },
+    {
+      "rater_id": 61437,
+      "count": 18810
+    },
+    {
+      "rater_id": 72352,
+      "count": 18443
+    },
+    {
+      "rater_id": 127228,
+      "count": 18342
+    },
+    {
+      "rater_id": 58766,
+      "count": 18197
+    },
+    {
+      "rater_id": 76083,
+      "count": 18019
+    },
+    {
+      "rater_id": 108319,
+      "count": 17755
+    },
+    {
+      "rater_id": 131977,
+      "count": 17560
+    },
+    {
+      "rater_id": 84753,
+      "count": 16667
+    },
+    {
+      "rater_id": 89034,
+      "count": 16427
+    },
+    {
+      "rater_id": 27333,
+      "count": 15872
+    },
+    {
+      "rater_id": 85633,
+      "count": 15419
+    },
+    {
+      "rater_id": 89475,
+      "count": 15278
+    },
+    {
+      "rater_id": 121115,
+      "count": 14187
+    },
+    {
+      "rater_id": 66159,
+      "count": 13915
+    },
+    {
+      "rater_id": 85373,
+      "count": 13790
+    },
+    {
+      "rater_id": 78821,
+      "count": 13769
+    },
+    {
+      "rater_id": 48370,
+      "count": 13095
+    }
+  ],
+  "top_profiles": [
+    {
+      "profile_id": 606,
+      "count": 33389
+    },
+    {
+      "profile_id": 1440,
+      "count": 28398
+    },
+    {
+      "profile_id": 320,
+      "count": 23649
+    },
+    {
+      "profile_id": 228,
+      "count": 23639
+    },
+    {
+      "profile_id": 475,
+      "count": 23113
+    },
+    {
+      "profile_id": 48,
+      "count": 21387
+    },
+    {
+      "profile_id": 4963,
+      "count": 21284
+    },
+    {
+      "profile_id": 479,
+      "count": 20634
+    },
+    {
+      "profile_id": 44,
+      "count": 18550
+    },
+    {
+      "profile_id": 4920,
+      "count": 18224
+    },
+    {
+      "profile_id": 645,
+      "count": 16591
+    },
+    {
+      "profile_id": 4886,
+      "count": 16253
+    },
+    {
+      "profile_id": 1477,
+      "count": 16049
+    },
+    {
+      "profile_id": 4408,
+      "count": 15620
+    },
+    {
+      "profile_id": 417,
+      "count": 14432
+    },
+    {
+      "profile_id": 415,
+      "count": 14335
+    },
+    {
+      "profile_id": 8066,
+      "count": 13485
+    },
+    {
+      "profile_id": 334,
+      "count": 13462
+    },
+    {
+      "profile_id": 102,
+      "count": 13451
+    },
+    {
+      "profile_id": 6355,
+      "count": 13308
+    }
+  ]
+}
